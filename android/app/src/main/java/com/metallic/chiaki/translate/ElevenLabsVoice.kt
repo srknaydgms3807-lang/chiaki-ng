@@ -2,13 +2,17 @@
 
 package com.metallic.chiaki.translate
 
+import android.content.Context
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
 import android.os.Handler
 import android.os.HandlerThread
 import org.json.JSONObject
+import java.io.ByteArrayOutputStream
+import java.io.File
 import java.net.HttpURLConnection
+import java.security.MessageDigest
 import java.net.URL
 import kotlin.math.max
 
@@ -18,12 +22,18 @@ import kotlin.math.max
  * böylece cümlenin tamamının üretilmesi beklenmez (gecikme en aza iner).
  * Yeni altyazı gelince devam eden okuma kesilir.
  */
-class ElevenLabsVoice(private val settings: TranslateSettings)
+class ElevenLabsVoice(context: Context, private val settings: TranslateSettings)
 {
 	companion object
 	{
 		private const val SAMPLE_RATE = 22050
+		private const val CACHE_LIMIT_BYTES = 300L * 1024 * 1024   // 300 MB
 	}
+
+	// Ses önbelleği: aynı cümle tekrar gelirse internete gitmeden, kredi harcamadan çalınır
+	private val cacheDir = File(context.cacheDir, "tr_ses").also { it.mkdirs() }
+	@Volatile var cacheHits = 0
+		private set
 
 	@Volatile var state = "hazır"
 		private set
@@ -69,11 +79,20 @@ class ElevenLabsVoice(private val settings: TranslateSettings)
 				track.flush()
 			}
 			catch(_: Exception) { }
+			val model = settings.elevenModel
+			val cacheFile = cacheFileFor(text, model)
+			if(cacheFile.exists() && playCached(cacheFile, gen))
+			{
+				cacheHits++
+				cacheFile.setLastModified(System.currentTimeMillis())
+				if(gen == generation) state = "hazır"
+				return@post
+			}
+
 			state = "üretiliyor"
 			var conn: HttpURLConnection? = null
 			try
 			{
-				val model = settings.elevenModel
 				val url = URL("https://api.elevenlabs.io/v1/text-to-speech/" +
 					settings.elevenVoiceId + "/stream?output_format=pcm_22050")
 				conn = (url.openConnection() as HttpURLConnection).apply {
@@ -117,6 +136,7 @@ class ElevenLabsVoice(private val settings: TranslateSettings)
 				}
 
 				charsUsed += text.length
+				val recorded = ByteArrayOutputStream()
 				val buffer = ByteArray(4096)
 				var leftover = -1        // tek kalan bayt (16 bit örneklerin yarısı)
 				var started = false
@@ -140,6 +160,7 @@ class ElevenLabsVoice(private val settings: TranslateSettings)
 						}
 						if(len > 0)
 						{
+							recorded.write(buffer, 0, len)
 							track.write(buffer, 0, len)
 							if(!started)
 							{
@@ -150,7 +171,12 @@ class ElevenLabsVoice(private val settings: TranslateSettings)
 						}
 					}
 				}
-				if(gen == generation) state = "hazır"
+				if(gen == generation)
+				{
+					// Ses yarıda kesilmeden tamamlandıysa önbelleğe kaydet
+					saveToCache(cacheFile, recorded.toByteArray())
+					state = "hazır"
+				}
 			}
 			catch(e: Exception)
 			{
@@ -164,6 +190,61 @@ class ElevenLabsVoice(private val settings: TranslateSettings)
 			{
 				conn?.disconnect()
 			}
+		}
+	}
+
+	/** Aynı metin + ses + model + ayarlar için aynı dosya adı. */
+	private fun cacheFileFor(text: String, model: String): File
+	{
+		val key = listOf(text, settings.elevenVoiceId, model, settings.elevenStability,
+			settings.elevenStyle, settings.voiceRate).joinToString("|")
+		val hash = MessageDigest.getInstance("SHA-1").digest(key.toByteArray(Charsets.UTF_8))
+			.joinToString("") { "%02x".format(it) }
+		return File(cacheDir, "$hash.pcm")
+	}
+
+	/** Önbellekteki sesi çalar; yeni altyazı gelirse yarıda keser. */
+	private fun playCached(file: File, gen: Int): Boolean
+	{
+		return try
+		{
+			state = "önbellekten"
+			val data = file.readBytes()
+			if(data.isEmpty()) return false
+			track.play()
+			var offset = 0
+			while(offset < data.size && gen == generation)
+			{
+				val len = minOf(8192, data.size - offset)
+				track.write(data, offset, len)
+				offset += len
+			}
+			true
+		}
+		catch(e: Exception) { false }
+	}
+
+	private fun saveToCache(file: File, data: ByteArray)
+	{
+		if(data.size < 2000) return   // bozuk/boş yanıtı saklama
+		try
+		{
+			file.writeBytes(data)
+			trimCache()
+		}
+		catch(_: Exception) { }
+	}
+
+	/** Önbellek 300 MB'ı aşarsa en uzun süredir kullanılmayan sesleri sil. */
+	private fun trimCache()
+	{
+		val files = cacheDir.listFiles()?.sortedBy { it.lastModified() } ?: return
+		var total = files.sumOf { it.length() }
+		for(f in files)
+		{
+			if(total <= CACHE_LIMIT_BYTES) break
+			total -= f.length()
+			f.delete()
 		}
 	}
 

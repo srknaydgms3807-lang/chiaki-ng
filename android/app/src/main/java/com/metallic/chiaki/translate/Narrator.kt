@@ -24,12 +24,12 @@ class Narrator(context: Context, private val settings: TranslateSettings): TextT
 	private var voices: List<Voice> = emptyList()
 	private var appliedVoiceIndex = -1
 	private val tts = TextToSpeech(context.applicationContext, this)
-	private val eleven = ElevenLabsVoice(settings)
+	private val eleven = ElevenLabsVoice(context, settings)
 
 	/** Teşhis satırı için: hangi motor, durum ve harcanan karakter. */
 	val summary: String
 		get() = if(useEleven)
-			"ElevenLabs: ${eleven.state} (${eleven.charsUsed} krk) / yedek: $state"
+			"ElevenLabs: ${eleven.state} (${eleven.charsUsed} krk, önbellek ${eleven.cacheHits}) / yedek: $state"
 		else state
 
 	private val useEleven get() = settings.voiceEngine == "elevenlabs" && eleven.configured
