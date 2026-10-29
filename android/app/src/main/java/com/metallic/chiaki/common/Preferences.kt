@@ -41,7 +41,7 @@ class Preferences(context: Context)
 
 	companion object
 	{
-		val resolutionDefault = Resolution.RES_720P
+		val resolutionDefault = Resolution.RES_1080P  // altyazılar okunabilsin diye 1080p
 		val resolutionAll = Resolution.values()
 		val fpsDefault = FPS.FPS_60
 		val fpsAll = FPS.values()

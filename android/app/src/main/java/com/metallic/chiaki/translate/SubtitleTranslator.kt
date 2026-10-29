@@ -78,6 +78,10 @@ class SubtitleTranslator(
 	@Volatile private var translations = 0
 	@Volatile private var lastError = ""
 	private var debugView: TextView? = null
+	private var regionFrame: View? = null
+	private var thumbView: android.widget.ImageView? = null
+	@Volatile private var lastThumb: Bitmap? = null
+	private var lastThumbTime = 0L
 	private val debugTick = object: Runnable
 	{
 		override fun run()
@@ -89,6 +93,8 @@ class SubtitleTranslator(
 				" | ses: ${narrator.summary}" +
 				(if(lastRead.isNotEmpty()) "\nokunan: ${lastRead.take(70)}" else "") +
 				(if(lastError.isNotEmpty()) "\nhata: ${lastError.take(90)}" else "")
+			positionRegionFrame()
+			lastThumb?.let { thumbView?.setImageBitmap(it) }
 			if(running) mainHandler.postDelayed(this, 500)
 		}
 	}
@@ -132,19 +138,61 @@ class SubtitleTranslator(
 	private fun attachDebugView()
 	{
 		val parent = overlay.parent as? android.view.ViewGroup ?: return
+		val wrap = android.widget.FrameLayout.LayoutParams.WRAP_CONTENT
+		// Sarı çerçeve: uygulamanın altyazıyı nerede aradığını gösterir
+		val frame = regionFrame ?: View(context).also {
+			it.background = android.graphics.drawable.GradientDrawable().apply {
+				setColor(Color.TRANSPARENT)
+				setStroke(4, Color.YELLOW)
+			}
+			parent.addView(it, android.widget.FrameLayout.LayoutParams(1, 1))
+			regionFrame = it
+		}
 		val v = debugView ?: TextView(context).also {
 			it.textSize = 11f
 			it.setTextColor(Color.YELLOW)
 			it.setBackgroundColor(Color.argb(170, 0, 0, 0))
 			it.setPadding(12, 6, 12, 6)
-			parent.addView(it, android.widget.FrameLayout.LayoutParams(
-				android.widget.FrameLayout.LayoutParams.WRAP_CONTENT,
-				android.widget.FrameLayout.LayoutParams.WRAP_CONTENT))
+			parent.addView(it, android.widget.FrameLayout.LayoutParams(wrap, wrap))
 			debugView = it
 		}
+		// Yakalanan görüntünün küçük önizlemesi (siyahsa görüntü alınamıyor demektir)
+		val thumb = thumbView ?: android.widget.ImageView(context).also {
+			it.setBackgroundColor(Color.DKGRAY)
+			it.adjustViewBounds = true
+			it.maxWidth = (context.resources.displayMetrics.widthPixels * 0.35f).toInt()
+			parent.addView(it, android.widget.FrameLayout.LayoutParams(wrap, wrap).apply {
+				gravity = android.view.Gravity.TOP or android.view.Gravity.END
+			})
+			thumbView = it
+		}
+		frame.bringToFront()
+		thumb.bringToFront()
 		v.bringToFront()
 		mainHandler.removeCallbacks(debugTick)
 		mainHandler.post(debugTick)
+	}
+
+	private fun positionRegionFrame()
+	{
+		val frame = regionFrame ?: return
+		val w = surfaceView.width
+		val h = surfaceView.height
+		if(w == 0 || h == 0) return
+		val sv = IntArray(2)
+		val parent = IntArray(2)
+		surfaceView.getLocationInWindow(sv)
+		(frame.parent as View).getLocationInWindow(parent)
+		val r = regionRect(w, h)
+		val lp = frame.layoutParams
+		if(lp.width != r.width() || lp.height != r.height())
+		{
+			lp.width = r.width()
+			lp.height = r.height()
+			frame.layoutParams = lp
+		}
+		frame.x = (sv[0] - parent[0] + r.left).toFloat()
+		frame.y = (sv[1] - parent[1] + r.top).toFloat()
 	}
 
 	fun release()
@@ -245,6 +293,11 @@ class SubtitleTranslator(
 		lastMask = mask
 
 		val now = System.currentTimeMillis()
+		if(settings.debug && now - lastThumbTime > 1000)
+		{
+			lastThumbTime = now
+			lastThumb = bmp.copy(Bitmap.Config.ARGB_8888, false)
+		}
 		val fallback = now - lastOcrTime > FALLBACK_OCR_MS
 		if((textVisible && changed) || fallback)
 		{
@@ -258,7 +311,11 @@ class SubtitleTranslator(
 	private fun runOcr(bmp: Bitmap)
 	{
 		ocrCount++
-		recognizer.process(InputImage.fromBitmap(bmp, 0))
+		// Akış 720p iken altyazı ~15 piksel; yazı okuyucu için 2 kat büyüt
+		val input = if(bmp.height < 400)
+			Bitmap.createScaledBitmap(bmp, bmp.width * 2, bmp.height * 2, true)
+		else bmp
+		recognizer.process(InputImage.fromBitmap(input, 0))
 			.addOnSuccessListener(workerExecutor) { result ->
 				val text = result.textBlocks
 					.flatMap { it.lines }
