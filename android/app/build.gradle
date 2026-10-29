@@ -27,6 +27,8 @@ android {
     defaultConfig {
         // Orijinal Chiaki ile çakışmasın diye ayrı paket adı
         applicationId "com.metallic.chiaki.tr"
+        // Sadece modern telefon işlemcisi (Samsung Galaxy S/Note vb.): APK çok daha küçük olur
+        ndk { abiFilters 'arm64-v8a' }
         minSdk 24
         targetSdk 35
         versionCode 12
