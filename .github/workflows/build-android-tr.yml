@@ -8,6 +8,9 @@ on:
   push:
     branches: [ "turkce-altyazi" ]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -42,3 +45,15 @@ jobs:
         with:
           name: PS5-Turkce-APK
           path: android/app/build/outputs/apk/debug/*.apk
+
+      # Telefondan kolay indirme: APK'yı "Releases" sayfasına koy (her derlemede güncellenir)
+      - name: Sürüm sayfasına koy
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/debug/*.apk PS5-Turkce.apk
+          gh release delete turkce-son --yes --cleanup-tag || true
+          gh release create turkce-son PS5-Turkce.apk \
+            --target "${{ github.sha }}" \
+            --title "PS5 Türkçe (son sürüm)" \
+            --notes "Telefondan PS5-Turkce.apk dosyasına dokunup indirin ve kurun."
