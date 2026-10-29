@@ -56,6 +56,7 @@ class SubtitleTranslator(
 			.setTargetLanguage(TranslateLanguage.TURKISH)
 			.build())
 	private val glossary = Glossary.load(context)
+	private val narrator = Narrator(context, settings)
 	private val cache = HashMap<String, String>()
 
 	@Volatile private var running = false
@@ -85,6 +86,7 @@ class SubtitleTranslator(
 			val f = surfaceView.holder.surfaceFrame
 			v.text = "TR teşhis | model: $modelState | yüzey: ${f.width()}x${f.height()}" +
 				" | kare: $frames (hata $copyFails$lastCopyError) | okuma: $ocrCount | çeviri: $translations" +
+				" | ses: ${narrator.state}" +
 				(if(lastRead.isNotEmpty()) "\nokunan: ${lastRead.take(70)}" else "") +
 				(if(lastError.isNotEmpty()) "\nhata: ${lastError.take(90)}" else "")
 			if(running) mainHandler.postDelayed(this, 500)
@@ -119,6 +121,7 @@ class SubtitleTranslator(
 	fun stop()
 	{
 		running = false
+		narrator.stop()
 		worker.removeCallbacksAndMessages(null)
 		mainHandler.post {
 			overlay.visibility = View.GONE
@@ -147,6 +150,7 @@ class SubtitleTranslator(
 	fun release()
 	{
 		stop()
+		narrator.shutdown()
 		recognizer.close()
 		translator.close()
 		workerThread.quitSafely()
@@ -293,6 +297,7 @@ class SubtitleTranslator(
 		cache[text]?.let {
 			shownSource = text
 			showText(it)
+			narrator.speak(Glossary.splitSpeaker(it).second)
 			busy = false
 			return
 		}
@@ -307,6 +312,7 @@ class SubtitleTranslator(
 				cache[text] = tr
 				shownSource = text
 				showText(tr)
+				narrator.speak(Glossary.restore(raw, slots))
 				busy = false
 			}
 			.addOnFailureListener(workerExecutor) {

@@ -17,6 +17,8 @@ class TranslateSettings(context: Context)
 		const val KEY_BRIGHTNESS = "tr_brightness"
 		const val KEY_TEXT_SIZE = "tr_text_size"
 		const val KEY_DEBUG = "tr_debug"
+		const val KEY_VOICE = "tr_voice_enabled"
+		const val KEY_VOICE_RATE = "tr_voice_rate"
 	}
 
 	private val prefs = PreferenceManager.getDefaultSharedPreferences(context)
@@ -37,4 +39,10 @@ class TranslateSettings(context: Context)
 
 	/** Ekranın sol üstünde teşhis satırı (sorun giderme için). */
 	val debug get() = prefs.getBoolean(KEY_DEBUG, true)
+
+	/** Türkçe çeviriyi sesli oku (dublaj). */
+	val voiceEnabled get() = prefs.getBoolean(KEY_VOICE, true)
+
+	/** Okuma hızı (%): 100 = normal. */
+	val voiceRate get() = prefs.getInt(KEY_VOICE_RATE, 115).coerceIn(50, 200)
 }

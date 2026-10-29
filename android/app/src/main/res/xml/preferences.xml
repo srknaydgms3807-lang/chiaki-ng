@@ -148,6 +148,21 @@
             app:summary="Altyazı geç algılanıyorsa düşürün, karlı sahnelerde yavaşlıyorsa artırın" />
 
         <SwitchPreference
+            app:key="tr_voice_enabled"
+            android:defaultValue="true"
+            app:title="Türkçe sesli okuma (dublaj)"
+            app:summary="Çeviriyi telefonun Türkçe sesiyle okur; yeni altyazı gelince öncekini keser" />
+
+        <SeekBarPreference
+            app:key="tr_voice_rate"
+            android:defaultValue="115"
+            app:min="50"
+            android:max="200"
+            app:showSeekBarValue="true"
+            app:title="Okuma hızı (%)"
+            app:summary="Konuşmaya yetişemiyorsa artırın. 100 = normal" />
+
+        <SwitchPreference
             app:key="tr_debug"
             android:defaultValue="true"
             app:title="Teşhis satırını göster"
