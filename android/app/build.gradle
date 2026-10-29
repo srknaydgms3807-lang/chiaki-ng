@@ -80,7 +80,15 @@ android {
 
     signingConfigs {
         release
+        // Sabit imza: güncellemeler eski sürümün üstüne kurulur, PS5 eşleştirmesi silinmez
+        trdebug {
+            storeFile file("tr-debug.keystore")
+            storePassword "android"
+            keyAlias "androiddebugkey"
+            keyPassword "android"
+        }
     }
+    buildTypes.debug.signingConfig = signingConfigs.trdebug
 
     buildTypes {
         release {
