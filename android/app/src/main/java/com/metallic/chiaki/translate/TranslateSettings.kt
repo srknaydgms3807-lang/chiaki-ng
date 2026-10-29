@@ -53,4 +53,18 @@ class TranslateSettings(context: Context)
 
 	/** Ses kalınlığı (%): 100 = normal, düşük = daha kalın/sert. */
 	val voicePitch get() = prefs.getInt(KEY_VOICE_PITCH, 80).coerceIn(50, 150)
+
+	// ---- ElevenLabs yapay zekâ sesi
+	/** "telefon" veya "elevenlabs" */
+	val voiceEngine get() = prefs.getString("tr_voice_engine", "elevenlabs") ?: "elevenlabs"
+	/** API anahtarı yalnızca bu telefonda saklanır. */
+	val elevenKey get() = prefs.getString("tr_eleven_key", "") ?: ""
+	/** Varsayılan: kalın sesli Amerikalı erkek anlatıcı (ElevenLabs hazır sesi "Brian"). */
+	val elevenVoiceId get() = (prefs.getString("tr_eleven_voice", "") ?: "").trim().ifEmpty { "nPczCjzI2devNBz1zQrb" }
+	/** eleven_flash_v2_5: hızlı ve yarı kredi; eleven_multilingual_v2: daha duygulu ama yavaş, tam kredi */
+	val elevenModel get() = prefs.getString("tr_eleven_model", "eleven_flash_v2_5") ?: "eleven_flash_v2_5"
+	/** Düşük = daha değişken/duygulu, yüksek = daha düz (%). */
+	val elevenStability get() = prefs.getInt("tr_eleven_stability", 35).coerceIn(0, 100)
+	/** Vurgu/üslup gücü (%), yalnızca duygulu modelde. */
+	val elevenStyle get() = prefs.getInt("tr_eleven_style", 45).coerceIn(0, 100)
 }

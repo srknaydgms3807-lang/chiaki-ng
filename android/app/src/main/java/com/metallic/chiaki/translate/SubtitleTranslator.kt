@@ -86,7 +86,7 @@ class SubtitleTranslator(
 			val f = surfaceView.holder.surfaceFrame
 			v.text = "TR teşhis | model: $modelState | yüzey: ${f.width()}x${f.height()}" +
 				" | kare: $frames (hata $copyFails$lastCopyError) | okuma: $ocrCount | çeviri: $translations" +
-				" | ses: ${narrator.state}" +
+				" | ses: ${narrator.summary}" +
 				(if(lastRead.isNotEmpty()) "\nokunan: ${lastRead.take(70)}" else "") +
 				(if(lastError.isNotEmpty()) "\nhata: ${lastError.take(90)}" else "")
 			if(running) mainHandler.postDelayed(this, 500)

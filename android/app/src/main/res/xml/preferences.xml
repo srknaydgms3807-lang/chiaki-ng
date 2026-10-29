@@ -162,6 +162,50 @@
             app:title="Okuma hızı (%)"
             app:summary="Konuşmaya yetişemiyorsa artırın. 100 = normal" />
 
+        <ListPreference
+            app:key="tr_voice_engine"
+            android:defaultValue="elevenlabs"
+            app:entries="@array/tr_voice_engine_titles"
+            app:entryValues="@array/tr_voice_engine_values"
+            app:useSimpleSummaryProvider="true"
+            app:title="Ses motoru" />
+
+        <EditTextPreference
+            app:key="tr_eleven_key"
+            app:title="ElevenLabs API anahtarı"
+            app:summary="elevenlabs.io > Profil > API Keys. Sadece bu telefonda saklanır, kimseyle paylaşmayın" />
+
+        <EditTextPreference
+            app:key="tr_eleven_voice"
+            app:title="ElevenLabs ses kimliği (Voice ID)"
+            app:summary="Boş bırakılırsa kalın sesli Amerikalı erkek anlatıcı. Başka ses için ElevenLabs'te sesin kimliğini kopyalayıp yapıştırın" />
+
+        <ListPreference
+            app:key="tr_eleven_model"
+            android:defaultValue="eleven_flash_v2_5"
+            app:entries="@array/tr_eleven_model_titles"
+            app:entryValues="@array/tr_eleven_model_values"
+            app:useSimpleSummaryProvider="true"
+            app:title="ElevenLabs modeli" />
+
+        <SeekBarPreference
+            app:key="tr_eleven_stability"
+            android:defaultValue="35"
+            app:min="0"
+            android:max="100"
+            app:showSeekBarValue="true"
+            app:title="Ses dengesi (%)"
+            app:summary="Düşük = daha duygulu ve değişken, yüksek = daha düz ve tutarlı" />
+
+        <SeekBarPreference
+            app:key="tr_eleven_style"
+            android:defaultValue="45"
+            app:min="0"
+            android:max="100"
+            app:showSeekBarValue="true"
+            app:title="Vurgu gücü (%)"
+            app:summary="Sadece Duygulu modelde: yüksek = daha abartılı, oyunculu konuşma" />
+
         <SeekBarPreference
             app:key="tr_voice_index"
             android:defaultValue="1"

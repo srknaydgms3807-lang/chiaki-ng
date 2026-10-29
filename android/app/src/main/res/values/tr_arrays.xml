@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="tr_voice_engine_titles">
+        <item>ElevenLabs (yapay zekâ, canlı ses)</item>
+        <item>Telefonun kendi sesi (internetsiz)</item>
+    </string-array>
+    <string-array name="tr_voice_engine_values">
+        <item>elevenlabs</item>
+        <item>telefon</item>
+    </string-array>
+    <string-array name="tr_eleven_model_titles">
+        <item>Hızlı (Flash v2.5): düşük gecikme, yarı kredi</item>
+        <item>Duygulu (Multilingual v2): daha canlı, daha yavaş, tam kredi</item>
+    </string-array>
+    <string-array name="tr_eleven_model_values">
+        <item>eleven_flash_v2_5</item>
+        <item>eleven_multilingual_v2</item>
+    </string-array>
+</resources>

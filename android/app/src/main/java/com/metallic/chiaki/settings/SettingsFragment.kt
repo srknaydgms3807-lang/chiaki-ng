@@ -18,8 +18,13 @@ import com.metallic.chiaki.common.ext.viewModelFactory
 import com.metallic.chiaki.common.getDatabase
 import com.metallic.chiaki.common.importSettingsFromUri
 
-class DataStore(val preferences: Preferences): PreferenceDataStore()
+// Türkçe altyazı ayarları (tr_*) gibi bu deponun tanımadığı anahtarlar
+// telefonun normal ayar deposuna kaydedilir; aksi halde sessizce kaybolurlardı.
+class DataStore(val preferences: Preferences, private val fallback: android.content.SharedPreferences): PreferenceDataStore()
 {
+	override fun getInt(key: String?, defValue: Int) = fallback.getInt(key, defValue)
+	override fun putInt(key: String?, value: Int) { fallback.edit().putInt(key, value).apply() }
+
 	override fun getBoolean(key: String?, defValue: Boolean) = when(key)
 	{
 		preferences.logVerboseKey -> preferences.logVerbose
@@ -27,7 +32,7 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 		preferences.rumbleEnabledKey -> preferences.rumbleEnabled
 		preferences.motionEnabledKey -> preferences.motionEnabled
 		preferences.buttonHapticEnabledKey -> preferences.buttonHapticEnabled
-		else -> defValue
+		else -> fallback.getBoolean(key, defValue)
 	}
 
 	override fun putBoolean(key: String?, value: Boolean)
@@ -39,6 +44,7 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 			preferences.rumbleEnabledKey -> preferences.rumbleEnabled = value
 			preferences.motionEnabledKey -> preferences.motionEnabled = value
 			preferences.buttonHapticEnabledKey -> preferences.buttonHapticEnabled = value
+			else -> fallback.edit().putBoolean(key, value).apply()
 		}
 	}
 
@@ -48,7 +54,7 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 		preferences.fpsKey -> preferences.fps.value
 		preferences.bitrateKey -> preferences.bitrate?.toString() ?: ""
 		preferences.codecKey -> preferences.codec.value
-		else -> defValue
+		else -> fallback.getString(key, defValue)
 	}
 
 	override fun putString(key: String, value: String?)
@@ -71,6 +77,7 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 				val codec = Preferences.Codec.values().firstOrNull { it.value == value } ?: return
 				preferences.codec = codec
 			}
+			else -> fallback.edit().putString(key, value).apply()
 		}
 	}
 }
@@ -90,8 +97,16 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 			.get(SettingsViewModel::class.java)
 
 		val preferences = viewModel.preferences
-		preferenceManager.preferenceDataStore = DataStore(preferences)
+		preferenceManager.preferenceDataStore = DataStore(preferences,
+			androidx.preference.PreferenceManager.getDefaultSharedPreferences(context))
 		setPreferencesFromResource(R.xml.preferences, rootKey)
+
+		// ElevenLabs anahtarı ekranda gizli (yıldızlı) yazılsın
+		preferenceScreen.findPreference<androidx.preference.EditTextPreference>("tr_eleven_key")
+			?.setOnBindEditTextListener {
+				it.inputType = android.text.InputType.TYPE_CLASS_TEXT or
+					android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+			}
 
 		preferenceScreen.findPreference<ListPreference>(getString(R.string.preferences_resolution_key))?.let {
 			it.entryValues = Preferences.resolutionAll.map { res -> res.value }.toTypedArray()

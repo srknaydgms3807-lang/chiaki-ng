@@ -24,6 +24,15 @@ class Narrator(context: Context, private val settings: TranslateSettings): TextT
 	private var voices: List<Voice> = emptyList()
 	private var appliedVoiceIndex = -1
 	private val tts = TextToSpeech(context.applicationContext, this)
+	private val eleven = ElevenLabsVoice(settings)
+
+	/** Teşhis satırı için: hangi motor, durum ve harcanan karakter. */
+	val summary: String
+		get() = if(useEleven)
+			"ElevenLabs: ${eleven.state} (${eleven.charsUsed} krk) / yedek: $state"
+		else state
+
+	private val useEleven get() = settings.voiceEngine == "elevenlabs" && eleven.configured
 
 	override fun onInit(status: Int)
 	{
@@ -73,7 +82,21 @@ class Narrator(context: Context, private val settings: TranslateSettings): TextT
 
 	fun speak(text: String)
 	{
-		if(!ready || !settings.voiceEnabled || text.isBlank())
+		if(!settings.voiceEnabled || text.isBlank())
+			return
+		if(useEleven)
+		{
+			if(ready) tts.stop()
+			// ElevenLabs başarısız olursa telefonun kendi sesiyle oku
+			eleven.speak(text) { speakWithPhone(text) }
+			return
+		}
+		speakWithPhone(text)
+	}
+
+	private fun speakWithPhone(text: String)
+	{
+		if(!ready)
 			return
 		applyVoice()
 		var pitch = settings.voicePitch / 100f
@@ -92,12 +115,14 @@ class Narrator(context: Context, private val settings: TranslateSettings): TextT
 
 	fun stop()
 	{
+		eleven.stop()
 		if(ready) tts.stop()
 	}
 
 	fun shutdown()
 	{
 		ready = false
+		eleven.release()
 		tts.stop()
 		tts.shutdown()
 	}
