@@ -98,6 +98,12 @@
         app:key="category_tr_subtitles"
         app:title="Türkçe altyazı">
         <SwitchPreference
+            app:key="tr_listen_mode"
+            android:defaultValue="true"
+            app:title="Dinleme modu (kol PS5'te)"
+            app:summary="Oyunu TV'de PS5'ten kolla oynarsınız; telefon sadece altyazıyı okuyup Türkçesini gösterir ve seslendirir. Telefondaki oyun sesi ve dokunmatik tuşlar kapanır" />
+
+        <SwitchPreference
             app:key="tr_subtitles_enabled"
             android:defaultValue="true"
             app:title="Türkçe altyazıyı aç"

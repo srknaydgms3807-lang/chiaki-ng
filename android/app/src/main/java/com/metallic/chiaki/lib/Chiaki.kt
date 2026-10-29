@@ -93,6 +93,7 @@ private class ChiakiNative
 		@JvmStatic external fun sessionSetSurface(ptr: Long, surface: Surface?)
 		@JvmStatic external fun sessionSetControllerState(ptr: Long, controllerState: ControllerState)
 		@JvmStatic external fun sessionSetLoginPin(ptr: Long, pin: String)
+		@JvmStatic external fun setGameAudioMuted(muted: Boolean)
 		@JvmStatic external fun discoveryServiceCreate(result: CreateResult, options: DiscoveryServiceOptions, javaService: DiscoveryService)
 		@JvmStatic external fun discoveryServiceFree(ptr: Long)
 		@JvmStatic external fun discoveryServiceWakeup(ptr: Long, host: String, userCredential: Long, ps5: Boolean)
@@ -531,4 +532,10 @@ class Regist(
 	{
 		callback(event)
 	}
+}
+
+/** Dinleme modunda telefondaki oyun sesini susturur (ses zaten TV'den gelir). */
+object GameAudio
+{
+	fun setMuted(muted: Boolean) = ChiakiNative.setGameAudioMuted(muted)
 }

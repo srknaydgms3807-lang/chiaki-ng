@@ -9,6 +9,17 @@
 
 #include <oboe/Oboe.h>
 
+#include <atomic>
+#include <jni.h>
+
+// Dinleme modu: oyun sesi TV'den geldiği için telefonda susturulur
+static std::atomic<bool> game_audio_muted(false);
+
+extern "C" JNIEXPORT void JNICALL Java_com_metallic_chiaki_lib_ChiakiNative_setGameAudioMuted(JNIEnv *env, jclass cls, jboolean muted)
+{
+	game_audio_muted.store(muted == JNI_TRUE);
+}
+
 #define BUFFER_CHUNK_SIZE 1024
 #define BUFFER_CHUNKS_COUNT 32
 
@@ -109,6 +120,8 @@ oboe::DataCallbackResult AudioOutputCallback::onAudioReady(oboe::AudioStream *st
 		CHIAKI_LOGV(audio_output->log, "Audio Output Buffer Underflow!");
 		memset(buf + buf_size_delivered, 0, buf_size_requested - buf_size_delivered);
 	}
+	if(game_audio_muted.load())
+		memset(buf, 0, buf_size_requested);
 
 	return oboe::DataCallbackResult::Continue;
 }

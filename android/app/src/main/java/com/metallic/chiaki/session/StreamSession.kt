@@ -31,10 +31,14 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 	private var surfaceTexture: SurfaceTexture? = null
 	private var surface: Surface? = null
 
+	/** Dinleme modu: telefon PS5'e hiçbir kol girdisi göndermez; oyun PS5'e bağlı kolla oynanır. */
+	@Volatile var inputDisabled = false
+
 	init
 	{
 		input.controllerStateChangedCallback = {
-			session?.setControllerState(it)
+			if(!inputDisabled)
+				session?.setControllerState(it)
 		}
 	}
 

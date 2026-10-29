@@ -179,12 +179,31 @@ class StreamActivity : AppCompatActivity()
 		controlsJob?.cancel()
 	}
 
+	/**
+	 * Dinleme modu: oyun TV'de PS5'ten, kol PS5'e bağlı oynanır.
+	 * Telefon yalnızca altyazıyı okur; oyun sesi susturulur, dokunmatik tuşlar ve
+	 * telefonun hareket sensörü PS5'e girdi göndermez.
+	 */
+	private fun applyListenMode(enabled: Boolean)
+	{
+		com.metallic.chiaki.lib.GameAudio.setMuted(enabled)
+		viewModel.session.inputDisabled = enabled
+		if(enabled)
+		{
+			viewModel.setOnScreenControlsEnabled(false)
+			viewModel.setTouchpadOnlyEnabled(false)
+			binding.onScreenControlsSwitch.isVisible = false
+			binding.touchpadOnlySwitch.isVisible = false
+		}
+	}
+
 	// Türkçe altyazı katmanı
 	private var subtitleTranslator: SubtitleTranslator? = null
 
 	private fun setupSubtitleTranslator()
 	{
 		val settings = TranslateSettings(this)
+		applyListenMode(settings.listenMode)
 		if(!settings.enabled)
 			return
 		binding.trSubtitle.textSize = settings.textSize.toFloat()

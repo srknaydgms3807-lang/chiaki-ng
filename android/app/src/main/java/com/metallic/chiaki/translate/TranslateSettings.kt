@@ -42,6 +42,13 @@ class TranslateSettings(context: Context)
 	/** Ekranın sol üstünde teşhis satırı (sorun giderme için). */
 	val debug get() = prefs.getBoolean(KEY_DEBUG, true)
 
+	/**
+	 * Dinleme modu: kol PS5'e bağlı, oyun TV'de PS5'ten oynanır.
+	 * Telefon yalnızca altyazıyı okur, Türkçesini ekranında gösterip seslendirir.
+	 * Telefondaki oyun sesi kapatılır, dokunmatik kontroller gizlenir.
+	 */
+	val listenMode get() = prefs.getBoolean("tr_listen_mode", true)
+
 	/** Türkçe çeviriyi sesli oku (dublaj). */
 	val voiceEnabled get() = prefs.getBoolean(KEY_VOICE, true)
 
