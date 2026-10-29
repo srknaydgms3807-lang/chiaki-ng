@@ -98,10 +98,16 @@
         app:key="category_tr_subtitles"
         app:title="Türkçe altyazı">
         <SwitchPreference
-            app:key="tr_listen_mode"
+            app:key="tr_controller_on_ps5"
             android:defaultValue="true"
-            app:title="Dinleme modu (kol PS5'te)"
-            app:summary="Oyunu TV'de PS5'ten kolla oynarsınız; telefon sadece altyazıyı okuyup Türkçesini gösterir ve seslendirir. Telefondaki oyun sesi ve dokunmatik tuşlar kapanır" />
+            app:title="Kol PS5'e bağlı"
+            app:summary="Kolu telefona değil PS5'e bağlı kullanın. Telefon PS5'e tuş göndermez, dokunmatik tuşlar gizlenir" />
+
+        <SwitchPreference
+            app:key="tr_mute_game_audio"
+            android:defaultValue="false"
+            app:title="Oyun sesini tamamen kapat"
+            app:summary="Müzik ve efektler dahil tüm oyun sesini kapatır. Sadece İngilizce konuşmaları kapatmak için bunu kapalı bırakıp oyunun ses ayarlarından Diyalog sesini 0 yapın" />
 
         <SwitchPreference
             app:key="tr_subtitles_enabled"

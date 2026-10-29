@@ -180,15 +180,14 @@ class StreamActivity : AppCompatActivity()
 	}
 
 	/**
-	 * Dinleme modu: oyun TV'de PS5'ten, kol PS5'e bağlı oynanır.
-	 * Telefon yalnızca altyazıyı okur; oyun sesi susturulur, dokunmatik tuşlar ve
-	 * telefonun hareket sensörü PS5'e girdi göndermez.
+	 * Kol PS5'e bağlıyken telefon PS5'e girdi göndermez (dokunmatik tuşlar, hareket sensörü).
+	 * İstenirse telefondaki oyun sesi tamamen kapatılır.
 	 */
-	private fun applyListenMode(enabled: Boolean)
+	private fun applyPs5ControllerMode(controllerOnPs5: Boolean, muteGame: Boolean)
 	{
-		com.metallic.chiaki.lib.GameAudio.setMuted(enabled)
-		viewModel.session.inputDisabled = enabled
-		if(enabled)
+		com.metallic.chiaki.lib.GameAudio.setMuted(muteGame)
+		viewModel.session.inputDisabled = controllerOnPs5
+		if(controllerOnPs5)
 		{
 			viewModel.setOnScreenControlsEnabled(false)
 			viewModel.setTouchpadOnlyEnabled(false)
@@ -203,7 +202,7 @@ class StreamActivity : AppCompatActivity()
 	private fun setupSubtitleTranslator()
 	{
 		val settings = TranslateSettings(this)
-		applyListenMode(settings.listenMode)
+		applyPs5ControllerMode(settings.controllerOnPs5, settings.muteGameAudio)
 		if(!settings.enabled)
 			return
 		binding.trSubtitle.textSize = settings.textSize.toFloat()
