@@ -162,6 +162,24 @@
             app:title="Okuma hızı (%)"
             app:summary="Konuşmaya yetişemiyorsa artırın. 100 = normal" />
 
+        <SeekBarPreference
+            app:key="tr_voice_index"
+            android:defaultValue="1"
+            app:min="1"
+            android:max="10"
+            app:showSeekBarValue="true"
+            app:title="Ses numarası"
+            app:summary="Telefondaki Türkçe sesler arasında gezinir. Hangisinin seçili olduğu oyun ekranındaki teşhis satırında yazar" />
+
+        <SeekBarPreference
+            app:key="tr_voice_pitch"
+            android:defaultValue="80"
+            app:min="50"
+            android:max="150"
+            app:showSeekBarValue="true"
+            app:title="Ses kalınlığı (%)"
+            app:summary="Düşük = daha kalın, sert erkek sesi. 100 = normal" />
+
         <SwitchPreference
             app:key="tr_debug"
             android:defaultValue="true"

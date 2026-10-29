@@ -19,6 +19,8 @@ class TranslateSettings(context: Context)
 		const val KEY_DEBUG = "tr_debug"
 		const val KEY_VOICE = "tr_voice_enabled"
 		const val KEY_VOICE_RATE = "tr_voice_rate"
+		const val KEY_VOICE_INDEX = "tr_voice_index"
+		const val KEY_VOICE_PITCH = "tr_voice_pitch"
 	}
 
 	private val prefs = PreferenceManager.getDefaultSharedPreferences(context)
@@ -45,4 +47,10 @@ class TranslateSettings(context: Context)
 
 	/** Okuma hızı (%): 100 = normal. */
 	val voiceRate get() = prefs.getInt(KEY_VOICE_RATE, 115).coerceIn(50, 200)
+
+	/** Telefondaki Türkçe seslerden hangisi (1'den başlar). */
+	val voiceIndex get() = prefs.getInt(KEY_VOICE_INDEX, 1).coerceIn(1, 20)
+
+	/** Ses kalınlığı (%): 100 = normal, düşük = daha kalın/sert. */
+	val voicePitch get() = prefs.getInt(KEY_VOICE_PITCH, 80).coerceIn(50, 150)
 }
