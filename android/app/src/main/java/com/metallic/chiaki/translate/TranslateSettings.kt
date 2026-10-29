@@ -16,6 +16,7 @@ class TranslateSettings(context: Context)
 		const val KEY_SIDE = "tr_region_side"
 		const val KEY_BRIGHTNESS = "tr_brightness"
 		const val KEY_TEXT_SIZE = "tr_text_size"
+		const val KEY_DEBUG = "tr_debug"
 	}
 
 	private val prefs = PreferenceManager.getDefaultSharedPreferences(context)
@@ -33,4 +34,7 @@ class TranslateSettings(context: Context)
 	val brightness get() = prefs.getInt(KEY_BRIGHTNESS, 185).coerceIn(100, 250)
 
 	val textSize get() = prefs.getInt(KEY_TEXT_SIZE, 22).coerceIn(12, 48)
+
+	/** Ekranın sol üstünde teşhis satırı (sorun giderme için). */
+	val debug get() = prefs.getBoolean(KEY_DEBUG, true)
 }

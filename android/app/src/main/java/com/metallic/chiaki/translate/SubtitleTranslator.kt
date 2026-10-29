@@ -67,21 +67,50 @@ class SubtitleTranslator(
 	private var emptyReads = 0
 	private var bitmap: Bitmap? = null
 
+	// ---- teşhis (ekranın sol üstünde canlı durum satırı)
+	@Volatile private var modelState = "bekliyor"
+	@Volatile private var frames = 0
+	@Volatile private var copyFails = 0
+	@Volatile private var lastCopyError = ""
+	@Volatile private var ocrCount = 0
+	@Volatile private var lastRead = ""
+	@Volatile private var translations = 0
+	@Volatile private var lastError = ""
+	private var debugView: TextView? = null
+	private val debugTick = object: Runnable
+	{
+		override fun run()
+		{
+			val v = debugView ?: return
+			val f = surfaceView.holder.surfaceFrame
+			v.text = "TR teşhis | model: $modelState | yüzey: ${f.width()}x${f.height()}" +
+				" | kare: $frames (hata $copyFails$lastCopyError) | okuma: $ocrCount | çeviri: $translations" +
+				(if(lastRead.isNotEmpty()) "\nokunan: ${lastRead.take(70)}" else "") +
+				(if(lastError.isNotEmpty()) "\nhata: ${lastError.take(90)}" else "")
+			if(running) mainHandler.postDelayed(this, 500)
+		}
+	}
+
 	fun start()
 	{
 		if(running || !settings.enabled)
 			return
 		running = true
+		if(settings.debug) mainHandler.post { attachDebugView() }
+		modelState = "indiriliyor"
 		showText("Çeviri modeli hazırlanıyor…")
 		// İlk kullanımda ~30 MB'lık İngilizce→Türkçe modeli indirilir; sonra tamamen internetsiz çalışır.
 		translator.downloadModelIfNeeded(DownloadConditions.Builder().build())
 			.addOnSuccessListener {
 				modelReady = true
+				modelState = "hazır"
 				showText("✓ Türkçe altyazı hazır")
 				mainHandler.postDelayed({ if(shownSource.isEmpty()) showText("") }, 3000)
 			}
 			.addOnFailureListener {
 				Log.e(TAG, "Model indirilemedi", it)
+				modelState = "HATA"
+				lastError = "model: ${it.javaClass.simpleName}: ${it.message}"
 				showText("Çeviri modeli indirilemedi. İnternete bağlanıp akışı yeniden başlatın.")
 			}
 		worker.post(loop)
@@ -91,7 +120,28 @@ class SubtitleTranslator(
 	{
 		running = false
 		worker.removeCallbacksAndMessages(null)
-		mainHandler.post { overlay.visibility = View.GONE }
+		mainHandler.post {
+			overlay.visibility = View.GONE
+			mainHandler.removeCallbacks(debugTick)
+		}
+	}
+
+	private fun attachDebugView()
+	{
+		val parent = overlay.parent as? android.view.ViewGroup ?: return
+		val v = debugView ?: TextView(context).also {
+			it.textSize = 11f
+			it.setTextColor(Color.YELLOW)
+			it.setBackgroundColor(Color.argb(170, 0, 0, 0))
+			it.setPadding(12, 6, 12, 6)
+			parent.addView(it, android.widget.FrameLayout.LayoutParams(
+				android.widget.FrameLayout.LayoutParams.WRAP_CONTENT,
+				android.widget.FrameLayout.LayoutParams.WRAP_CONTENT))
+			debugView = it
+		}
+		v.bringToFront()
+		mainHandler.removeCallbacks(debugTick)
+		mainHandler.post(debugTick)
 	}
 
 	fun release()
@@ -131,13 +181,22 @@ class SubtitleTranslator(
 		{
 			PixelCopy.request(surfaceView, src, bmp, { result ->
 				if(result == PixelCopy.SUCCESS)
+				{
+					frames++
 					onFrame(bmp)
+				}
 				else
+				{
+					copyFails++
+					lastCopyError = ", kod $result"
 					busy = false
+				}
 			}, worker)
 		}
 		catch(e: Exception)
 		{
+			copyFails++
+			lastError = "kopya: ${e.javaClass.simpleName}: ${e.message}"
 			busy = false
 		}
 	}
@@ -194,6 +253,7 @@ class SubtitleTranslator(
 
 	private fun runOcr(bmp: Bitmap)
 	{
+		ocrCount++
 		recognizer.process(InputImage.fromBitmap(bmp, 0))
 			.addOnSuccessListener(workerExecutor) { result ->
 				val text = result.textBlocks
@@ -202,9 +262,13 @@ class SubtitleTranslator(
 					.joinToString(" ") { it.text.trim() }
 					.replace(Regex("\\s+"), " ")
 					.trim()
+				if(text.isNotEmpty()) lastRead = text
 				onText(text)
 			}
-			.addOnFailureListener(workerExecutor) { busy = false }
+			.addOnFailureListener(workerExecutor) {
+				lastError = "okuma: ${it.javaClass.simpleName}: ${it.message}"
+				busy = false
+			}
 	}
 
 	private fun onText(text: String)
@@ -239,6 +303,7 @@ class SubtitleTranslator(
 				var tr = Glossary.restore(raw, slots)
 				if(speaker.isNotEmpty())
 					tr = "$speaker: $tr"
+				translations++
 				cache[text] = tr
 				shownSource = text
 				showText(tr)
@@ -246,6 +311,7 @@ class SubtitleTranslator(
 			}
 			.addOnFailureListener(workerExecutor) {
 				Log.e(TAG, "Çeviri hatası", it)
+				lastError = "çeviri: ${it.javaClass.simpleName}: ${it.message}"
 				busy = false
 			}
 	}

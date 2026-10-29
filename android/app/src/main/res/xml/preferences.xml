@@ -146,5 +146,11 @@
             app:showSeekBarValue="true"
             app:title="Yazı algılama eşiği"
             app:summary="Altyazı geç algılanıyorsa düşürün, karlı sahnelerde yavaşlıyorsa artırın" />
+
+        <SwitchPreference
+            app:key="tr_debug"
+            android:defaultValue="true"
+            app:title="Teşhis satırını göster"
+            app:summary="Oyun ekranının sol üstünde çeviri durumunu gösterir (sorun giderme için)" />
     </PreferenceCategory>
 </PreferenceScreen>
