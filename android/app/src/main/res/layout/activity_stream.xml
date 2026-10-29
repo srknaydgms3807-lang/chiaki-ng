@@ -20,6 +20,23 @@
             android:layout_height="wrap_content"/>
     </com.metallic.chiaki.stream.AspectRatioFrameLayout>
 
+    <!-- Türkçe altyazı: İngilizce altyazının üstüne yazılır -->
+    <TextView
+        android:id="@+id/trSubtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#D9000000"
+        android:gravity="center"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        android:shadowColor="#000000"
+        android:shadowRadius="4"
+        android:visibility="gone"/>
+
     <ProgressBar
         android:id="@+id/progressBar"
         android:layout_width="wrap_content"

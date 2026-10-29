@@ -31,6 +31,8 @@ import com.metallic.chiaki.session.*
 import com.metallic.chiaki.touchcontrols.DefaultTouchControlsFragment
 import com.metallic.chiaki.touchcontrols.TouchControlsFragment
 import com.metallic.chiaki.touchcontrols.TouchpadOnlyFragment
+import com.metallic.chiaki.translate.SubtitleTranslator
+import com.metallic.chiaki.translate.TranslateSettings
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -119,6 +121,7 @@ class StreamActivity : AppCompatActivity()
 		viewModel.session.attachToSurfaceView(binding.surfaceView)
 		viewModel.session.state.observe(this, Observer { this.stateChanged(it) })
 		adjustStreamViewAspect()
+		setupSubtitleTranslator()
 
 		if(Preferences(this).rumbleEnabled)
 		{
@@ -158,18 +161,34 @@ class StreamActivity : AppCompatActivity()
 		super.onResume()
 		hideSystemUI()
 		viewModel.session.resume()
+		subtitleTranslator?.start()
 	}
 
 	override fun onPause()
 	{
 		super.onPause()
+		subtitleTranslator?.stop()
 		viewModel.session.pause()
 	}
 
 	override fun onDestroy()
 	{
 		super.onDestroy()
+		subtitleTranslator?.release()
+		subtitleTranslator = null
 		controlsJob?.cancel()
+	}
+
+	// Türkçe altyazı katmanı
+	private var subtitleTranslator: SubtitleTranslator? = null
+
+	private fun setupSubtitleTranslator()
+	{
+		val settings = TranslateSettings(this)
+		if(!settings.enabled)
+			return
+		binding.trSubtitle.textSize = settings.textSize.toFloat()
+		subtitleTranslator = SubtitleTranslator(this, binding.surfaceView, binding.trSubtitle, settings)
 	}
 
 	private fun reconnect()

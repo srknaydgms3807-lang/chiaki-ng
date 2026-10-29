@@ -1,0 +1,96 @@
+# RDR2 sözlüğü
+# Her satıra bir isim yazın: çeviride aynen kalır.
+# Özel çeviri için:  English=Türkçe   (örnek:  Van der Linde gang=Van der Linde çetesi)
+# # ile başlayan satırlar dikkate alınmaz. Dosyayı Not Defteri ile düzenleyebilirsiniz.
+
+# --- Karakterler ---
+Arthur Morgan
+Arthur
+Dutch van der Linde
+Dutch
+Van der Linde gang=Van der Linde çetesi
+Van der Linde
+Hosea
+John Marston
+John
+Abigail
+Jack
+Sadie Adler
+Sadie
+Micah
+Javier
+Bill
+Charles
+Lenny
+Sean
+Kieran
+Uncle
+Pearson
+Strauss
+Swanson
+Tilly
+Karen
+Mary-Beth
+Molly
+Susan Grimshaw
+Grimshaw
+Trelawny
+Josiah
+Cleet
+Joe
+Colm O'Driscoll
+Colm
+O'Driscolls
+O'Driscoll
+Leopold
+Cornwall
+Milton
+Agent Milton
+Ross
+Bronte
+Braithwaite
+Braithwaites
+Grays
+Gray
+Rains Fall
+Eagle Flies
+Pinkertons
+Pinkerton
+Cripps
+Mary
+Rufus
+
+# --- Yerler ---
+Valentine
+Saint Denis
+Rhodes
+Strawberry
+Blackwater
+Annesburg
+Van Horn
+Armadillo
+Tumbleweed
+Colter
+Horseshoe Overlook
+Clemens Point
+Shady Belle
+Beaver Hollow
+Emerald Ranch
+Lemoyne
+New Hanover
+West Elizabeth
+New Austin
+Ambarino
+Guarma
+Heartlands
+Roanoke Ridge
+Bayou Nwa
+Flatneck Station
+Wapiti
+Beecher's Hope
+Lagras
+Caliban's Seat
+
+# --- Diğer ---
+Mister=Bay
+Mrs.=Bayan

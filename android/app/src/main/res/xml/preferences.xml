@@ -93,4 +93,58 @@
             app:title="@string/preferences_import_settings_title"
             app:icon="@drawable/ic_import"/>
     </PreferenceCategory>
+
+    <PreferenceCategory
+        app:key="category_tr_subtitles"
+        app:title="Türkçe altyazı">
+        <SwitchPreference
+            app:key="tr_subtitles_enabled"
+            android:defaultValue="true"
+            app:title="Türkçe altyazıyı aç"
+            app:summary="Oyundaki İngilizce altyazıyı telefonda okuyup internetsiz olarak Türkçeye çevirir" />
+
+        <SeekBarPreference
+            app:key="tr_region_top"
+            android:defaultValue="66"
+            app:min="0"
+            android:max="99"
+            app:showSeekBarValue="true"
+            app:title="Altyazı alanı: üst kenar (%)"
+            app:summary="Ekranın üstünden yüzde kaç aşağıda başlasın. RDR2 için 66" />
+
+        <SeekBarPreference
+            app:key="tr_region_bottom"
+            android:defaultValue="86"
+            app:min="1"
+            android:max="100"
+            app:showSeekBarValue="true"
+            app:title="Altyazı alanı: alt kenar (%)"
+            app:summary="Kontrol ipuçlarına (Hold X…) gelmeden bitsin. RDR2 için 86" />
+
+        <SeekBarPreference
+            app:key="tr_region_side"
+            android:defaultValue="15"
+            app:min="0"
+            android:max="45"
+            app:showSeekBarValue="true"
+            app:title="Altyazı alanı: yanlardan pay (%)"
+            app:summary="Haritayı dışarıda bırakmak için soldan ve sağdan kırpılır" />
+
+        <SeekBarPreference
+            app:key="tr_text_size"
+            android:defaultValue="22"
+            app:min="12"
+            android:max="48"
+            app:showSeekBarValue="true"
+            app:title="Türkçe yazı boyutu" />
+
+        <SeekBarPreference
+            app:key="tr_brightness"
+            android:defaultValue="185"
+            app:min="100"
+            android:max="250"
+            app:showSeekBarValue="true"
+            app:title="Yazı algılama eşiği"
+            app:summary="Altyazı geç algılanıyorsa düşürün, karlı sahnelerde yavaşlıyorsa artırın" />
+    </PreferenceCategory>
 </PreferenceScreen>
