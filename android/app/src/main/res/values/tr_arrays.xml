@@ -16,4 +16,12 @@
         <item>eleven_flash_v2_5</item>
         <item>eleven_multilingual_v2</item>
     </string-array>
+    <string-array name="tr_translate_engine_titles">
+        <item>DeepL (daha doğal, internet gerekir)</item>
+        <item>ML Kit (internetsiz, basit)</item>
+    </string-array>
+    <string-array name="tr_translate_engine_values">
+        <item>deepl</item>
+        <item>mlkit</item>
+    </string-array>
 </resources>

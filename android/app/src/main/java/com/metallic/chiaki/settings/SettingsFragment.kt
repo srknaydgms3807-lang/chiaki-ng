@@ -102,11 +102,12 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 		setPreferencesFromResource(R.xml.preferences, rootKey)
 
 		// ElevenLabs anahtarı ekranda gizli (yıldızlı) yazılsın
-		preferenceScreen.findPreference<androidx.preference.EditTextPreference>("tr_eleven_key")
-			?.setOnBindEditTextListener {
-				it.inputType = android.text.InputType.TYPE_CLASS_TEXT or
-					android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
-			}
+		for(secretKey in listOf("tr_eleven_key", "tr_deepl_key"))
+			preferenceScreen.findPreference<androidx.preference.EditTextPreference>(secretKey)
+				?.setOnBindEditTextListener {
+					it.inputType = android.text.InputType.TYPE_CLASS_TEXT or
+						android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+				}
 
 		preferenceScreen.findPreference<ListPreference>(getString(R.string.preferences_resolution_key))?.let {
 			it.entryValues = Preferences.resolutionAll.map { res -> res.value }.toTypedArray()

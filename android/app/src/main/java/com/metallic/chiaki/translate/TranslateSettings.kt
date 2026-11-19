@@ -60,6 +60,12 @@ class TranslateSettings(context: Context)
 	/** Ses kalınlığı (%): 100 = normal, düşük = daha kalın/sert. */
 	val voicePitch get() = prefs.getInt(KEY_VOICE_PITCH, 80).coerceIn(50, 150)
 
+	// ---- Çeviri motoru
+	/** "deepl" (internet, daha doğal) veya "mlkit" (internetsiz). DeepL başarısız olursa ML Kit'e geçilir. */
+	val translateEngine get() = prefs.getString("tr_translate_engine", "deepl") ?: "deepl"
+	/** DeepL API anahtarı yalnızca bu telefonda saklanır. */
+	val deeplKey get() = prefs.getString("tr_deepl_key", "") ?: ""
+
 	// ---- ElevenLabs yapay zekâ sesi
 	/** "telefon" veya "elevenlabs" */
 	val voiceEngine get() = prefs.getString("tr_voice_engine", "elevenlabs") ?: "elevenlabs"

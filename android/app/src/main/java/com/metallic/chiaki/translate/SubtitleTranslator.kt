@@ -55,12 +55,16 @@ class SubtitleTranslator(
 			.setSourceLanguage(TranslateLanguage.ENGLISH)
 			.setTargetLanguage(TranslateLanguage.TURKISH)
 			.build())
+	private val deepl = DeepLTranslator(settings)
 	private val glossary = Glossary.load(context)
 	private val narrator = Narrator(context, settings)
 	private val cache = HashMap<String, String>()
 
 	@Volatile private var running = false
 	@Volatile private var modelReady = false
+	// DeepL anahtarı varsa ML Kit modelini beklemeden çeviriye başlanır
+	private val deeplOn get() = settings.translateEngine == "deepl" && deepl.configured
+	private val ready get() = modelReady || deeplOn
 	private var busy = false
 	private var lastMask: BooleanArray? = null
 	private var lastOcrTime = 0L
@@ -88,7 +92,7 @@ class SubtitleTranslator(
 		{
 			val v = debugView ?: return
 			val f = surfaceView.holder.surfaceFrame
-			v.text = "TR teşhis | model: $modelState | yüzey: ${f.width()}x${f.height()}" +
+			v.text = "TR teşhis | motor: ${if(deeplOn) "DeepL: ${deepl.state} (${deepl.charsUsed} krk)" else "ML Kit"} | model: $modelState | yüzey: ${f.width()}x${f.height()}" +
 				" | kare: $frames (hata $copyFails$lastCopyError) | okuma: $ocrCount | çeviri: $translations" +
 				" | ses: ${narrator.summary}" +
 				(if(lastRead.isNotEmpty()) "\nokunan: ${lastRead.take(70)}" else "") +
@@ -119,7 +123,8 @@ class SubtitleTranslator(
 				Log.e(TAG, "Model indirilemedi", it)
 				modelState = "HATA"
 				lastError = "model: ${it.javaClass.simpleName}: ${it.message}"
-				showText("Çeviri modeli indirilemedi. İnternete bağlanıp akışı yeniden başlatın.")
+				if(!deeplOn)
+					showText("Çeviri modeli indirilemedi. İnternete bağlanıp akışı yeniden başlatın.")
 			}
 		worker.post(loop)
 	}
@@ -346,7 +351,7 @@ class SubtitleTranslator(
 			return
 		}
 		emptyReads = 0
-		if(similar(text, shownSource) || !modelReady || text.length > 350)
+		if(similar(text, shownSource) || !ready || text.length > 350)
 		{
 			busy = false
 			return
@@ -360,23 +365,39 @@ class SubtitleTranslator(
 		}
 		val (speaker, body) = Glossary.splitSpeaker(text)
 		val (protected, slots) = glossary.protect(body)
-		translator.translate(protected)
-			.addOnSuccessListener(workerExecutor) { raw ->
-				var tr = Glossary.restore(raw, slots)
-				if(speaker.isNotEmpty())
-					tr = "$speaker: $tr"
-				translations++
-				cache[text] = tr
-				shownSource = text
-				showText(tr)
-				narrator.speak(Glossary.restore(raw, slots))
+		val previous = shownSource
+		val onOk = { raw: String ->
+			var tr = Glossary.restore(raw, slots)
+			if(speaker.isNotEmpty())
+				tr = "$speaker: $tr"
+			translations++
+			cache[text] = tr
+			shownSource = text
+			showText(tr)
+			narrator.speak(Glossary.restore(raw, slots))
+			busy = false
+		}
+		val viaMlKit = {
+			if(!modelReady)
+			{
 				busy = false
 			}
-			.addOnFailureListener(workerExecutor) {
-				Log.e(TAG, "Çeviri hatası", it)
-				lastError = "çeviri: ${it.javaClass.simpleName}: ${it.message}"
-				busy = false
-			}
+			else translator.translate(protected)
+				.addOnSuccessListener(workerExecutor) { onOk(it) }
+				.addOnFailureListener(workerExecutor) {
+					Log.e(TAG, "Çeviri hatası", it)
+					lastError = "çeviri: ${it.javaClass.simpleName}: ${it.message}"
+					busy = false
+				}
+		}
+		if(deeplOn)
+		{
+			// Önceki altyazı bağlam olarak gönderilir; DeepL başarısız olursa ML Kit'e düşülür
+			deepl.translate(protected, previous,
+				onOk = { raw -> worker.post { onOk(raw) } },
+				onFail = { msg -> worker.post { lastError = "DeepL: $msg"; viaMlKit() } })
+		}
+		else viaMlKit()
 	}
 
 	// ------------------------------------------------------------ gösterim

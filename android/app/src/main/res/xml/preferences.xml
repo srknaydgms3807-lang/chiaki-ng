@@ -113,7 +113,20 @@
             app:key="tr_subtitles_enabled"
             android:defaultValue="true"
             app:title="Türkçe altyazıyı aç"
-            app:summary="Oyundaki İngilizce altyazıyı telefonda okuyup internetsiz olarak Türkçeye çevirir" />
+            app:summary="Oyundaki İngilizce altyazıyı telefonda okuyup Türkçeye çevirir" />
+
+        <ListPreference
+            app:key="tr_translate_engine"
+            android:defaultValue="deepl"
+            app:entries="@array/tr_translate_engine_titles"
+            app:entryValues="@array/tr_translate_engine_values"
+            app:useSimpleSummaryProvider="true"
+            app:title="Çeviri motoru" />
+
+        <EditTextPreference
+            app:key="tr_deepl_key"
+            app:title="DeepL API anahtarı"
+            app:summary="deepl.com > API Free hesabı > Account > API Keys (anahtar :fx ile biter). Sadece bu telefonda saklanır. Boşsa ML Kit kullanılır" />
 
         <SeekBarPreference
             app:key="tr_region_top"
