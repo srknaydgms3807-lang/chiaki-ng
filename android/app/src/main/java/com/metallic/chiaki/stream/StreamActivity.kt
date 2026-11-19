@@ -117,8 +117,7 @@ class StreamActivity : AppCompatActivity()
 			showOverlay()
 		}
 
-		//viewModel.session.attachToTextureView(textureView)
-		viewModel.session.attachToSurfaceView(binding.surfaceView)
+		viewModel.session.attachToTextureView(binding.textureView)
 		viewModel.session.state.observe(this, Observer { this.stateChanged(it) })
 		adjustStreamViewAspect()
 		setupSubtitleTranslator()
@@ -206,7 +205,7 @@ class StreamActivity : AppCompatActivity()
 		if(!settings.enabled)
 			return
 		binding.trSubtitle.textSize = settings.textSize.toFloat()
-		subtitleTranslator = SubtitleTranslator(this, binding.surfaceView, binding.trSubtitle, settings)
+		subtitleTranslator = SubtitleTranslator(this, binding.textureView, binding.trSubtitle, settings)
 	}
 
 	private fun reconnect()

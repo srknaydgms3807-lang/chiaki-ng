@@ -12,8 +12,7 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
 import android.util.Log
-import android.view.PixelCopy
-import android.view.SurfaceView
+import android.view.TextureView
 import android.view.View
 import android.widget.TextView
 import com.google.mlkit.common.model.DownloadConditions
@@ -31,7 +30,7 @@ import kotlin.math.roundToInt
 
 class SubtitleTranslator(
 	private val context: Context,
-	private val surfaceView: SurfaceView,
+	private val surfaceView: TextureView,
 	private val overlay: TextView,
 	private val settings: TranslateSettings
 )
@@ -96,7 +95,7 @@ class SubtitleTranslator(
 		override fun run()
 		{
 			val v = debugView ?: return
-			val f = surfaceView.holder.surfaceFrame
+			val f = Rect(0, 0, surfaceView.width, surfaceView.height)
 			v.text = "TR teşhis | motor: ${if(deeplOn) "DeepL: ${deepl.state} (${deepl.charsUsed} krk)" else "ML Kit"} | model: $modelState | yüzey: ${f.width()}x${f.height()}" +
 				" | kare: $frames (hata $copyFails$lastCopyError) | okuma: $ocrCount/$ocrDone | çeviri: $translations" +
 				"\nyakalanan: $lastBmpSize ort.parlaklık $lastAvg maks $lastMaxLum | kopya kodları: $copyErrors" +
@@ -231,40 +230,44 @@ class SubtitleTranslator(
 		}
 	}
 
+	// TextureView'dan görüntüyü alır (SurfaceView + PixelCopy bu telefonda siyah dönüyordu).
+	// Tüm görüntü en fazla 1600 piksel genişliğe küçültülür, altyazı bölgesi kesilip okunur.
+	private var fullBitmap: Bitmap? = null
 	private fun captureRegion()
 	{
-		val holder = surfaceView.holder
-		val frame = holder.surfaceFrame
-		if(!holder.surface.isValid || frame.width() <= 0 || frame.height() <= 0)
+		val vw = surfaceView.width
+		val vh = surfaceView.height
+		if(!surfaceView.isAvailable || vw <= 0 || vh <= 0)
 			return
-		val src = regionRect(frame.width(), frame.height())
-		if(src.width() <= 0 || src.height() <= 0)
-			return
-		val bmp = bitmap?.takeIf { it.width == src.width() && it.height == src.height() }
-			?: Bitmap.createBitmap(src.width(), src.height(), Bitmap.Config.ARGB_8888).also { bitmap = it }
 		busy = true
-		try
-		{
-			PixelCopy.request(surfaceView, src, bmp, { result ->
-				if(result == PixelCopy.SUCCESS)
+		mainHandler.post {
+			try
+			{
+				val fw = minOf(vw, 1600)
+				val fh = (vh * fw / vw.toFloat()).roundToInt().coerceAtLeast(1)
+				val full = fullBitmap?.takeIf { it.width == fw && it.height == fh }
+					?: Bitmap.createBitmap(fw, fh, Bitmap.Config.ARGB_8888).also { fullBitmap = it }
+				surfaceView.getBitmap(full)
+				val r = regionRect(fw, fh)
+				val rw = r.width().coerceAtMost(fw - r.left)
+				val rh = r.height().coerceAtMost(fh - r.top)
+				if(rw <= 0 || rh <= 0)
 				{
-					frames++
-					onFrame(bmp)
-				}
-				else
-				{
-					copyFails++
-					copyErrors.merge(result, 1, Int::plus)
-					lastCopyError = ", kod $result"
 					busy = false
+					return@post
 				}
-			}, worker)
-		}
-		catch(e: Exception)
-		{
-			copyFails++
-			lastError = "kopya: ${e.javaClass.simpleName}: ${e.message}"
-			busy = false
+				val crop = Bitmap.createBitmap(full, r.left, r.top, rw, rh)
+				worker.post {
+					frames++
+					onFrame(crop)
+				}
+			}
+			catch(e: Exception)
+			{
+				copyFails++
+				lastError = "kopya: ${e.javaClass.simpleName}: ${e.message}"
+				busy = false
+			}
 		}
 	}
 
