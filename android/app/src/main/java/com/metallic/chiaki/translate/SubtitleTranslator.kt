@@ -316,9 +316,10 @@ class SubtitleTranslator(
 	private fun runOcr(bmp: Bitmap)
 	{
 		ocrCount++
-		// Akış 720p iken altyazı ~15 piksel; yazı okuyucu için 2 kat büyüt
-		val input = if(bmp.height < 400)
-			Bitmap.createScaledBitmap(bmp, bmp.width * 2, bmp.height * 2, true)
+		// Küçük altyazı (GTA 6 gibi ~8 piksel harf) yazı okuyucuya yetmez: okuma bölgesini 3 kat büyüt
+		val scale = when { bmp.height < 250 -> 3; bmp.height < 500 -> 2; else -> 1 }
+		val input = if(scale > 1)
+			Bitmap.createScaledBitmap(bmp, bmp.width * scale, bmp.height * scale, true)
 		else bmp
 		recognizer.process(InputImage.fromBitmap(input, 0))
 			.addOnSuccessListener(workerExecutor) { result ->
