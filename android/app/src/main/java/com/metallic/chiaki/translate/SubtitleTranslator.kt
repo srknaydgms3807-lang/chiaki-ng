@@ -78,6 +78,11 @@ class SubtitleTranslator(
 	@Volatile private var copyFails = 0
 	@Volatile private var lastCopyError = ""
 	@Volatile private var ocrCount = 0
+	@Volatile private var ocrDone = 0
+	@Volatile private var lastAvg = -1
+	@Volatile private var lastMaxLum = -1
+	@Volatile private var lastBmpSize = ""
+	private val copyErrors = java.util.concurrent.ConcurrentHashMap<Int, Int>()
 	@Volatile private var lastRead = ""
 	@Volatile private var translations = 0
 	@Volatile private var lastError = ""
@@ -93,7 +98,8 @@ class SubtitleTranslator(
 			val v = debugView ?: return
 			val f = surfaceView.holder.surfaceFrame
 			v.text = "TR teşhis | motor: ${if(deeplOn) "DeepL: ${deepl.state} (${deepl.charsUsed} krk)" else "ML Kit"} | model: $modelState | yüzey: ${f.width()}x${f.height()}" +
-				" | kare: $frames (hata $copyFails$lastCopyError) | okuma: $ocrCount | çeviri: $translations" +
+				" | kare: $frames (hata $copyFails$lastCopyError) | okuma: $ocrCount/$ocrDone | çeviri: $translations" +
+				"\nyakalanan: $lastBmpSize ort.parlaklık $lastAvg maks $lastMaxLum | kopya kodları: $copyErrors" +
 				" | ses: ${narrator.summary}" +
 				(if(lastRead.isNotEmpty()) "\nokunan: ${lastRead.take(70)}" else "") +
 				(if(lastError.isNotEmpty()) "\nhata: ${lastError.take(90)}" else "")
@@ -163,11 +169,14 @@ class SubtitleTranslator(
 		}
 		// Yakalanan görüntünün küçük önizlemesi (siyahsa görüntü alınamıyor demektir)
 		val thumb = thumbView ?: android.widget.ImageView(context).also {
-			it.setBackgroundColor(Color.DKGRAY)
+			it.setBackgroundColor(Color.RED)
+			it.setPadding(4, 4, 4, 4)
 			it.adjustViewBounds = true
-			it.maxWidth = (context.resources.displayMetrics.widthPixels * 0.35f).toInt()
+			it.minimumWidth = 300
+			it.minimumHeight = 60
+			it.maxWidth = (context.resources.displayMetrics.widthPixels * 0.5f).toInt()
 			parent.addView(it, android.widget.FrameLayout.LayoutParams(wrap, wrap).apply {
-				gravity = android.view.Gravity.TOP or android.view.Gravity.END
+				gravity = android.view.Gravity.BOTTOM or android.view.Gravity.START
 			})
 			thumbView = it
 		}
@@ -245,6 +254,7 @@ class SubtitleTranslator(
 				else
 				{
 					copyFails++
+					copyErrors.merge(result, 1, Int::plus)
 					lastCopyError = ", kod $result"
 					busy = false
 				}
@@ -277,6 +287,18 @@ class SubtitleTranslator(
 		bmp.getPixels(pixels, 0, bmp.width, 0, 0, bmp.width, bmp.height)
 		val mask = BooleanArray(cols * rows)
 		var bright = 0
+		var sum = 0L
+		var maxLum = 0
+		for(i in pixels.indices step 7)
+		{
+			val px = pixels[i]
+			val lum = (Color.red(px) + Color.green(px) + Color.blue(px)) / 3
+			sum += lum
+			if(lum > maxLum) maxLum = lum
+		}
+		lastAvg = (sum / max(1, (pixels.size + 6) / 7)).toInt()
+		lastMaxLum = maxLum
+		lastBmpSize = "${bmp.width}x${bmp.height}"
 		val threshold = settings.brightness
 		for(y in 0 until rows)
 			for(x in 0 until cols)
@@ -323,6 +345,7 @@ class SubtitleTranslator(
 		else bmp
 		recognizer.process(InputImage.fromBitmap(input, 0))
 			.addOnSuccessListener(workerExecutor) { result ->
+				ocrDone++
 				val text = result.textBlocks
 					.flatMap { it.lines }
 					.sortedWith(compareBy({ it.boundingBox?.top ?: 0 }, { it.boundingBox?.left ?: 0 }))
