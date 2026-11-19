@@ -94,3 +94,57 @@ Caliban's Seat
 # --- Diğer ---
 Mister=Bay
 Mrs.=Bayan
+
+# --- GTA 6: karakterler ---
+Lucia Caminos
+Lucia
+Jason Duval
+Jason
+Brian Heder
+Lori Heder
+Heder
+Raul Bautista
+Raul Batista
+Cal Hampton
+Boobie Ike
+Boobie
+Dre'Quan Priest
+Dre'Quan
+Real Dimez
+Dimez
+Roxy
+Bae-Luxe
+DWNPLY
+Valentia
+Val
+Petra Navarro
+Petra
+Andres de Leon
+Andres
+Raymond
+Ernesto
+Stefani
+Mendez
+DJ Tom
+DJ Kerry
+Robyn
+Burna
+Palmsy
+Delta Dawne
+El Martillo
+La Gata
+Trina
+
+# --- GTA 6: yerler ---
+Leonida Keys
+Leonida Penitentiary
+Leonida
+Vice City
+The Keys
+Grassrivers
+Port Gellhorn
+Ambrosia
+Mount Kalaga National Park
+Kalaga
+Megamundo
+Only Raw Records
