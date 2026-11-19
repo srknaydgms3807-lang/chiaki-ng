@@ -173,6 +173,24 @@ class StreamInput(val context: Context, val preferences: Preferences)
 		return true
 	}
 
+	/**
+	 * Kolun touchpad'i Android'de fare imleci gibi davranır. İmleç yakalandığında (pointer capture)
+	 * hareket yok sayılır, touchpad'e basmak PS5'in touchpad tuşu olarak gönderilir (GTA 6 haritası vb.).
+	 */
+	fun onCapturedPointerEvent(event: MotionEvent): Boolean
+	{
+		val pressed = event.buttonState and MotionEvent.BUTTON_PRIMARY != 0
+		val had = keyControllerState.buttons and ControllerState.BUTTON_TOUCHPAD != 0U
+		if(pressed == had)
+			return true
+		keyControllerState.buttons = if(pressed)
+			keyControllerState.buttons or ControllerState.BUTTON_TOUCHPAD
+		else
+			keyControllerState.buttons and ControllerState.BUTTON_TOUCHPAD.inv()
+		controllerStateUpdated()
+		return true
+	}
+
 	fun onGenericMotionEvent(event: MotionEvent): Boolean
 	{
 		if(event.source and InputDevice.SOURCE_CLASS_JOYSTICK != InputDevice.SOURCE_CLASS_JOYSTICK)

@@ -118,6 +118,16 @@ class StreamActivity : AppCompatActivity()
 		}
 
 		viewModel.session.attachToTextureView(binding.textureView)
+
+		// Kolun touchpad'i fare imleci olmasın: imleci yakala, touchpad'e basmayı PS5 touchpad tuşuna çevir
+		if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+		{
+			binding.mainStreamLayout.isFocusable = true
+			binding.mainStreamLayout.isFocusableInTouchMode = true
+			binding.mainStreamLayout.setOnCapturedPointerListener { _, event ->
+				viewModel.input.onCapturedPointerEvent(event)
+			}
+		}
 		viewModel.session.state.observe(this, Observer { this.stateChanged(it) })
 		adjustStreamViewAspect()
 		setupSubtitleTranslator()
@@ -249,7 +259,14 @@ class StreamActivity : AppCompatActivity()
 	{
 		super.onWindowFocusChanged(hasFocus)
 		if(hasFocus)
+		{
 			hideSystemUI()
+			if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+			{
+				binding.mainStreamLayout.requestFocus()
+				binding.mainStreamLayout.requestPointerCapture()
+			}
+		}
 	}
 
 	private fun hideSystemUI()
